@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ЛДПР - Кабинет пользователя</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body class="bg-slate-100 min-h-screen" data-page="user">
+    <header class="bg-blue-900 text-white">
+      <div class="container-page py-4 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+        <h1 class="text-lg font-semibold">🦅 Личный кабинет гражданина</h1>
+        <div class="flex gap-2 items-center">
+          <span id="userGreeting" class="text-sm"></span>
+          <button id="openProfileModalBtn" class="btn-outline-light">Профиль</button>
+          <button id="openCreateTicketModalBtn" class="btn-accent">Новое обращение</button>
+          <button id="logoutBtn" class="btn-outline-light">Выйти</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container-page py-6">
+      <h2 class="text-xl font-semibold text-blue-900 mb-4">Мои обращения</h2>
+      <div id="ticketsList" class="grid gap-3"></div>
+    </main>
+
+    <section id="createTicketModal" class="modal hidden">
+      <div class="modal-panel">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold">Новое обращение</h3>
+          <button id="closeCreateTicketModalBtn" class="text-gray-500">✕</button>
+        </div>
+        <form id="createTicketForm" class="space-y-3 mt-4">
+          <div>
+            <label class="block text-sm mb-1">Тема</label>
+            <select id="ticketSubject" class="input-field"></select>
+          </div>
+          <div>
+            <label class="block text-sm mb-1">Сообщение</label>
+            <textarea id="ticketMessage" required rows="4" class="input-field"></textarea>
+          </div>
+          <div>
+            <label class="block text-sm mb-1">Прикрепить файл (имитация)</label>
+            <input id="attachmentInput" type="file" class="input-field" />
+            <p id="attachmentName" class="text-xs text-gray-500 mt-1">Файл не выбран</p>
+          </div>
+          <button type="submit" class="btn-primary w-full">Отправить</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="ticketChatModal" class="modal hidden">
+      <div class="modal-panel lg:max-w-2xl">
+        <div class="flex items-center justify-between">
+          <h3 id="chatTitle" class="text-lg font-semibold"></h3>
+          <button id="closeTicketChatModalBtn" class="text-gray-500">✕</button>
+        </div>
+        <div id="chatMessages" class="chat-list mt-4"></div>
+        <form id="sendUserMessageForm" class="mt-4 flex gap-2">
+          <input id="userChatInput" class="input-field" placeholder="Введите сообщение..." />
+          <button type="submit" class="btn-primary whitespace-nowrap">Отправить</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="profileModal" class="modal hidden">
+      <div class="modal-panel">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold">Мой профиль</h3>
+          <button id="closeProfileModalBtn" class="text-gray-500">✕</button>
+        </div>
+        <form id="profileForm" class="space-y-3 mt-4">
+          <div>
+            <label class="block text-sm mb-1">ФИО</label>
+            <input id="profileName" class="input-field" required />
+          </div>
+          <div>
+            <label class="block text-sm mb-1">Email</label>
+            <input id="profileEmail" type="email" class="input-field" required />
+          </div>
+          <div>
+            <label class="block text-sm mb-1">Телефон</label>
+            <input id="profilePhone" class="input-field" required />
+          </div>
+          <div>
+            <label class="block text-sm mb-1">Адрес</label>
+            <input id="profileAddress" class="input-field" />
+          </div>
+          <button type="submit" class="btn-primary w-full">Сохранить изменения</button>
+        </form>
+      </div>
+    </section>
+
+    <script src="js/main.js" defer></script>
+  </body>
+</html>

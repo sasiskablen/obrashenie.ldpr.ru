@@ -1,0 +1,376 @@
+:root {
+  --ldpr-blue: #38bdf8;
+  --ldpr-blue-dark: #0f172a;
+  --ldpr-surface: #1f2937;
+  --ldpr-surface-soft: #334155;
+  --ldpr-gold: #facc15;
+  --ldpr-text: #e2e8f0;
+  --ldpr-muted: #94a3b8;
+}
+
+body.theme-dark {
+  --ldpr-bg: linear-gradient(165deg, #0b1120 0%, #152238 35%, #0f172a 65%, #0c1222 100%);
+  --ldpr-bg-glow: radial-gradient(ellipse 90% 55% at 15% -10%, rgba(56, 189, 248, 0.18) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 95% 105%, rgba(250, 204, 21, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 40% at 50% 50%, rgba(59, 130, 246, 0.06) 0%, transparent 60%);
+  --ldpr-header: linear-gradient(120deg, #0c1628 0%, #132337 45%, #0f1c2e 100%);
+  --ldpr-header-border: rgba(56, 189, 248, 0.22);
+  --ldpr-title: #7dd3fc;
+  --ldpr-text: #e2e8f0;
+  --ldpr-muted: #94a3b8;
+  --ldpr-card: linear-gradient(155deg, rgba(36, 48, 68, 0.92) 0%, rgba(30, 41, 59, 0.88) 50%, rgba(24, 33, 48, 0.9) 100%);
+  --ldpr-card-border: rgba(100, 116, 139, 0.45);
+  --ldpr-input-bg: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.88) 100%);
+  --ldpr-input-border: #475569;
+  --ldpr-modal-bg: linear-gradient(165deg, #151f2e 0%, #111827 55%, #0f172a 100%);
+  --ldpr-chat-user: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 55%, #1e40af 100%);
+  --ldpr-chat-user-text: #dbeafe;
+  --ldpr-chat-admin: linear-gradient(135deg, #92400e 0%, #b45309 50%, #78350f 100%);
+  --ldpr-chat-admin-text: #fef3c7;
+  --ldpr-thead: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  --ldpr-btn-primary: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 45%, #0284c7 100%);
+  --ldpr-btn-accent: linear-gradient(135deg, #fde047 0%, #facc15 50%, #eab308 100%);
+  --ldpr-modal-overlay: linear-gradient(145deg, rgba(2, 6, 23, 0.82) 0%, rgba(15, 23, 42, 0.75) 100%);
+}
+
+body.theme-light {
+  --ldpr-bg: linear-gradient(165deg, #f0f9ff 0%, #e0f2fe 40%, #f8fafc 70%, #f1f5f9 100%);
+  --ldpr-bg-glow: radial-gradient(ellipse 85% 50% at 10% 0%, rgba(56, 189, 248, 0.2) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 45% at 100% 20%, rgba(250, 204, 21, 0.12) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 40% at 50% 100%, rgba(14, 165, 233, 0.08) 0%, transparent 50%);
+  --ldpr-header: linear-gradient(120deg, #e0f2fe 0%, #bae6fd 50%, #f0f9ff 100%);
+  --ldpr-header-border: rgba(14, 165, 233, 0.35);
+  --ldpr-title: #0c4a6e;
+  --ldpr-text: #0f172a;
+  --ldpr-muted: #1e293b;
+  --ldpr-card: linear-gradient(160deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 45%, rgba(241, 245, 249, 0.92) 100%);
+  --ldpr-card-border: rgba(148, 163, 184, 0.45);
+  --ldpr-input-bg: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  --ldpr-input-border: #cbd5e1;
+  --ldpr-modal-bg: linear-gradient(165deg, #ffffff 0%, #f8fafc 55%, #f1f5f9 100%);
+  --ldpr-chat-user: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+  --ldpr-chat-user-text: #0c4a6e;
+  --ldpr-chat-admin: linear-gradient(135deg, #fef9c3 0%, #fef3c7 100%);
+  --ldpr-chat-admin-text: #713f12;
+  --ldpr-thead: linear-gradient(180deg, #e2e8f0 0%, #f1f5f9 100%);
+  --ldpr-btn-primary: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 50%, #0284c7 100%);
+  --ldpr-btn-accent: linear-gradient(135deg, #fde047 0%, #facc15 50%, #eab308 100%);
+  --ldpr-modal-overlay: linear-gradient(145deg, rgba(15, 23, 42, 0.55) 0%, rgba(30, 41, 59, 0.45) 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+  color: var(--ldpr-text);
+}
+
+.bg-slate-100 {
+  background: var(--ldpr-bg-glow), var(--ldpr-bg) !important;
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+.bg-blue-900 {
+  background: var(--ldpr-header) !important;
+  border-bottom: 1px solid var(--ldpr-header-border);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+}
+
+body.theme-dark .bg-blue-900 {
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(56, 189, 248, 0.08);
+}
+
+.text-blue-900 {
+  color: var(--ldpr-title) !important;
+}
+
+.text-gray-600,
+.text-gray-500,
+.text-gray-700 {
+  color: var(--ldpr-muted) !important;
+}
+
+.container-page {
+  width: min(1100px, 92%);
+  margin-inline: auto;
+}
+
+.card {
+  background: var(--ldpr-card);
+  border: 1px solid var(--ldpr-card-border);
+  backdrop-filter: blur(8px);
+  border-radius: 0.9rem;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+body.theme-light .card {
+  box-shadow: 0 10px 36px rgba(14, 116, 144, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.input-field {
+  width: 100%;
+  background: var(--ldpr-input-bg);
+  color: var(--ldpr-text);
+  border: 1px solid var(--ldpr-input-border);
+  border-radius: 0.6rem;
+  padding: 0.55rem 0.75rem;
+  outline: none;
+  transition: 0.15s ease;
+}
+
+.input-field::placeholder {
+  color: var(--ldpr-muted);
+}
+
+textarea.input-field,
+select.input-field {
+  color: var(--ldpr-text);
+}
+
+body.theme-dark select.input-field option {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+body.theme-light select.input-field option {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.input-field:focus {
+  border-color: var(--ldpr-blue);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+}
+
+.btn-primary,
+.btn-accent,
+.btn-outline-light {
+  border: none;
+  border-radius: 0.6rem;
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-primary {
+  background: var(--ldpr-btn-primary);
+  color: #082f49;
+  box-shadow: 0 4px 14px rgba(14, 165, 233, 0.35);
+}
+
+.btn-primary:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 6px 20px rgba(14, 165, 233, 0.45);
+}
+
+.btn-accent {
+  background: var(--ldpr-btn-accent);
+  color: #422006;
+  box-shadow: 0 4px 14px rgba(234, 179, 8, 0.35);
+}
+
+.btn-accent:hover {
+  filter: brightness(1.05);
+  box-shadow: 0 6px 18px rgba(234, 179, 8, 0.45);
+}
+
+.btn-outline-light {
+  border: 1px solid #7dd3fc70;
+  color: #bae6fd;
+  background: transparent;
+}
+
+.btn-outline-light:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.06) 100%);
+}
+
+body.theme-light .btn-outline-light:hover {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 9999px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.status-new {
+  background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
+  color: #fecaca;
+  box-shadow: 0 2px 8px rgba(127, 29, 29, 0.35);
+}
+
+.status-new::before {
+  content: "🔴";
+}
+
+.status-progress {
+  background: linear-gradient(135deg, #a16207 0%, #78350f 100%);
+  color: #fde68a;
+  box-shadow: 0 2px 8px rgba(120, 53, 15, 0.35);
+}
+
+.status-progress::before {
+  content: "🟡";
+}
+
+.status-closed {
+  background: linear-gradient(135deg, #166534 0%, #14532d 100%);
+  color: #bbf7d0;
+  box-shadow: 0 2px 8px rgba(20, 83, 45, 0.35);
+}
+
+.status-closed::before {
+  content: "🟢";
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: var(--ldpr-modal-overlay);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 50;
+}
+
+.modal-panel {
+  width: min(700px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  background: var(--ldpr-modal-bg);
+  color: var(--ldpr-text);
+  border: 1px solid var(--ldpr-card-border);
+  border-radius: 0.8rem;
+  padding: 1rem;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.modal-panel label,
+.modal-panel h3,
+.modal-panel p {
+  color: var(--ldpr-text);
+}
+
+body.theme-light .modal-panel {
+  box-shadow: 0 20px 50px rgba(14, 116, 144, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.chat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 320px;
+  overflow: auto;
+  padding-right: 0.25rem;
+}
+
+.chat-bubble {
+  max-width: 85%;
+  border-radius: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+
+.chat-user {
+  align-self: flex-start;
+  background: var(--ldpr-chat-user);
+  color: var(--ldpr-chat-user-text);
+}
+
+.chat-admin {
+  align-self: flex-end;
+  background: var(--ldpr-chat-admin);
+  color: var(--ldpr-chat-admin-text);
+}
+
+table {
+  color: var(--ldpr-text);
+}
+
+thead tr {
+  background: var(--ldpr-thead) !important;
+}
+
+tr.border-b {
+  border-color: var(--ldpr-card-border);
+}
+
+body.theme-light tr.border-b {
+  border-color: #e2e8f0;
+}
+
+.theme-toggle-btn {
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  z-index: 120;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+  color: #e2e8f0;
+  border-radius: 999px;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(56, 189, 248, 0.15);
+}
+
+body.theme-light .theme-toggle-btn {
+  background: linear-gradient(145deg, #ffffff 0%, #e0f2fe 100%);
+  color: #0f172a;
+  border-color: rgba(14, 165, 233, 0.35);
+  box-shadow: 0 6px 20px rgba(14, 116, 144, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+body.theme-light .text-white {
+  color: #0f172a !important;
+}
+
+body.theme-light .btn-outline-light {
+  border: 1px solid #94a3b8;
+  color: #0f172a;
+  background: #ffffff;
+}
+
+body.theme-light .btn-outline-light:hover {
+  background: #f1f5f9;
+}
+
+body.theme-light .opacity-70 {
+  opacity: 1;
+  color: #334155 !important;
+}
+
+/* Tailwind utility overrides: градиенты для кнопок и карточек из main.js */
+.bg-blue-700 {
+  background: var(--ldpr-btn-primary) !important;
+  color: #082f49 !important;
+  box-shadow: 0 2px 10px rgba(14, 165, 233, 0.35);
+}
+
+.bg-blue-700:hover {
+  filter: brightness(1.06);
+}
+
+body.theme-dark main .bg-white.rounded-xl {
+  background: var(--ldpr-card) !important;
+  color: var(--ldpr-text);
+  border: 1px solid var(--ldpr-card-border);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+body.theme-light main .bg-white.rounded-xl {
+  background: var(--ldpr-card) !important;
+  border: 1px solid var(--ldpr-card-border);
+}

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ЛДПР - Панель администратора</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body class="bg-slate-100 min-h-screen" data-page="admin">
+    <header class="bg-blue-900 text-white">
+      <div class="container-page py-4 flex items-center justify-between">
+        <h1 class="text-lg md:text-xl font-semibold">🦅 Панель управления ЛДПР</h1>
+        <button id="logoutBtn" class="btn-outline-light">Выйти</button>
+      </div>
+    </header>
+
+    <main class="container-page py-6">
+      <section class="card p-4">
+        <div class="grid md:grid-cols-3 gap-3">
+          <select id="statusFilter" class="input-field">
+            <option value="all">Все статусы</option>
+            <option value="new">Новые</option>
+            <option value="in_progress">В работе</option>
+            <option value="closed">Завершено</option>
+          </select>
+          <select id="topicFilter" class="input-field"></select>
+          <input id="searchFilter" class="input-field" placeholder="Поиск по ФИО или email" />
+        </div>
+        <div class="grid md:grid-cols-4 gap-3 mt-3">
+          <input id="reportDateFrom" type="date" class="input-field" />
+          <input id="reportDateTo" type="date" class="input-field" />
+          <button id="downloadPeriodReportBtn" class="btn-primary">Скачать отчет за период</button>
+        </div>
+      </section>
+
+      <section class="card p-4 mt-4 overflow-x-auto">
+        <table class="w-full min-w-[920px] text-sm">
+          <thead>
+            <tr class="text-left bg-slate-100">
+              <th class="p-3">Дата</th>
+              <th class="p-3">ФИО</th>
+              <th class="p-3">Email</th>
+              <th class="p-3">Тема</th>
+              <th class="p-3">Текст</th>
+              <th class="p-3">Статус</th>
+              <th class="p-3">Действие</th>
+            </tr>
+          </thead>
+          <tbody id="ticketsTbody"></tbody>
+        </table>
+      </section>
+    </main>
+
+    <section id="adminTicketModal" class="modal hidden">
+      <div class="modal-panel lg:max-w-3xl">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold">Детали обращения</h3>
+          <div class="flex items-center gap-2">
+            <button id="downloadTicketPdfBtn" class="btn-accent">Скачать PDF</button>
+            <button id="closeAdminTicketModalBtn" class="text-gray-500">✕</button>
+          </div>
+        </div>
+        <div id="adminTicketMeta" class="text-sm text-gray-700 mt-3 grid md:grid-cols-2 gap-2"></div>
+        <div id="adminChatHistory" class="chat-list mt-4"></div>
+
+        <form id="adminReplyForm" class="mt-4 space-y-3">
+          <div>
+            <label class="block text-sm mb-1">Ответ администратора</label>
+            <textarea id="adminReplyInput" required rows="3" class="input-field"></textarea>
+          </div>
+          <div>
+            <label class="block text-sm mb-1">Вложение (опционально)</label>
+            <input id="adminAttachmentInput" type="file" class="input-field" />
+            <p id="adminAttachmentName" class="text-xs text-gray-500 mt-1">Файл не выбран</p>
+          </div>
+          <div>
+            <label class="block text-sm mb-1">Статус обращения</label>
+            <select id="adminStatusSelect" class="input-field"></select>
+          </div>
+          <button type="submit" class="btn-primary w-full">Отправить ответ</button>
+        </form>
+      </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/pdfmake@0.2.10/build/pdfmake.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfmake@0.2.10/build/vfs_fonts.js"></script>
+    <script src="js/main.js" defer></script>
+  </body>
+</html>
