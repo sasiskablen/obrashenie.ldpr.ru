@@ -1,3 +1,4 @@
+import { syncMessageToSupabase, subscribeToMessages, unsubscribeFromMessages } from './db/SupabaseService.js';
 (function () {
   const STORAGE_KEY = "ldpr_app_db";
   const SESSION_KEY = "currentUser";
@@ -369,6 +370,21 @@
           '<p class="text-[11px] opacity-70 mt-1">' + formatDate(m.createdAt) + "</p></div>";
       }).join("");
       open("ticketChatModal");
+      
+      // Подписка на новые сообщения из Supabase
+      unsubscribeFromMessages();
+      subscribeToMessages(ticketId, function(newMsg) {
+        const messagesDiv = document.getElementById("chatMessages");
+        // Проверяем, нет ли уже такого сообщения
+        if (!messagesDiv.innerHTML.includes(newMsg.id)) {
+          messagesDiv.innerHTML += '<div class="chat-bubble ' + (newMsg.senderRole === ROLES.ADMIN ? "chat-admin" : "chat-user") + '">' +
+            "<p>" + newMsg.content + "</p>" +
+            renderAttachmentHtml(newMsg.attachment) +
+            '<p class="text-[11px] opacity-70 mt-1">' + formatDate(newMsg.createdAt) + "</p></div>";
+          messagesDiv.scrollTop = messagesDiv.scrollHeight;
+          renderTickets();
+        }
+      });
     }
 
     document.getElementById("createTicketForm").addEventListener("submit", async function (e) {
@@ -381,9 +397,11 @@
         const ticket = { id: createId("tkt"), userId: currentUser.id, subject: document.getElementById("ticketSubject").value, status: "new", createdAt: now, updatedAt: now };
         const file = document.getElementById("attachmentInput").files[0] || null;
         const attachment = file ? await toAttachment(file) : selectedAttachment;
+        const newMessage = { id: createId("msg"), ticketId: ticket.id, senderId: currentUser.id, senderRole: ROLES.USER, content: content, attachment: attachment, createdAt: now };
         db.tickets.push(ticket);
-        db.messages.push({ id: createId("msg"), ticketId: ticket.id, senderId: currentUser.id, senderRole: ROLES.USER, content: content, attachment: attachment, createdAt: now });
+        db.messages.push(newMessage);
         writeDb(db);
+        syncMessageToSupabase(newMessage);
         e.target.reset();
         selectedAttachment = null;
         document.getElementById("attachmentName").textContent = "Файл не выбран";
@@ -401,8 +419,10 @@
       const content = input.value.trim();
       if (!content) return;
       const db = readDb();
-      db.messages.push({ id: createId("msg"), ticketId: activeTicketId, senderId: currentUser.id, senderRole: ROLES.USER, content: content, attachment: null, createdAt: nowIso() });
+      const newMessage = { id: createId("msg"), ticketId: activeTicketId, senderId: currentUser.id, senderRole: ROLES.USER, content: content, attachment: null, createdAt: nowIso() };
+      db.messages.push(newMessage);
       writeDb(db);
+      syncMessageToSupabase(newMessage);
       input.value = "";
       openChat(activeTicketId);
       renderTickets();
@@ -543,7 +563,7 @@
       });
       const tbody = document.getElementById("ticketsTbody");
       if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-500">Ничего не найдено</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-500">Ничего не найдено</td></td>';
         return;
       }
       tbody.innerHTML = rows.map(function (r) {
@@ -555,7 +575,7 @@
           "<td class='p-3'>" + ((r.first && r.first.content) ? r.first.content.slice(0, 70) : "") + "</td>" +
           "<td class='p-3'><span class='status-pill " + STATUS_CLASSES[r.ticket.status] + "'>" + STATUS_LABELS[r.ticket.status] + "</span></td>" +
           "<td class='p-3'><button class='px-3 py-1 bg-blue-700 text-white rounded hover:bg-blue-800' data-open-ticket='" + r.ticket.id + "'>Открыть</button></td>" +
-          "</tr>";
+          " </tr>";
       }).join("");
       tbody.querySelectorAll("[data-open-ticket]").forEach(function (btn) {
         btn.addEventListener("click", function () { openTicket(btn.getAttribute("data-open-ticket")); });
@@ -582,6 +602,20 @@
       st.innerHTML = '<option value="new">Новое</option><option value="in_progress">В работе</option><option value="closed">Завершено</option>';
       st.value = row.ticket.status;
       open("adminTicketModal");
+      
+      // Подписка на новые сообщения для админа
+      unsubscribeFromMessages();
+      subscribeToMessages(ticketId, function(newMsg) {
+        const messagesDiv = document.getElementById("adminChatHistory");
+        if (!messagesDiv.innerHTML.includes(newMsg.id)) {
+          messagesDiv.innerHTML += '<div class="chat-bubble ' + (newMsg.senderRole === ROLES.ADMIN ? "chat-admin" : "chat-user") + '">' +
+            "<p>" + newMsg.content + "</p>" +
+            renderAttachmentHtml(newMsg.attachment) +
+            "<p class='text-[11px] opacity-70 mt-1'>" + formatDate(newMsg.createdAt) + "</p></div>";
+          messagesDiv.scrollTop = messagesDiv.scrollHeight;
+          renderTable();
+        }
+      });
     }
 
     function exportTicketToPdf(row) {
@@ -667,13 +701,15 @@
         const db = readDb();
         const file = document.getElementById("adminAttachmentInput").files[0] || null;
         const attachment = file ? await toAttachment(file) : adminSelectedAttachment;
-        db.messages.push({ id: createId("msg"), ticketId: openedTicketId, senderId: admin.id, senderRole: ROLES.ADMIN, content: content, attachment: attachment, createdAt: nowIso() });
+        const newMessage = { id: createId("msg"), ticketId: openedTicketId, senderId: admin.id, senderRole: ROLES.ADMIN, content: content, attachment: attachment, createdAt: nowIso() };
+        db.messages.push(newMessage);
         const ticket = db.tickets.find(function (t) { return t.id === openedTicketId; });
         if (ticket) {
           ticket.status = document.getElementById("adminStatusSelect").value;
           ticket.updatedAt = nowIso();
         }
         writeDb(db);
+        syncMessageToSupabase(newMessage);
         document.getElementById("adminReplyInput").value = "";
         document.getElementById("adminReplyForm").reset();
         adminSelectedAttachment = null;
