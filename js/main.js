@@ -1,4 +1,3 @@
-
 (function () {
   const STORAGE_KEY = "ldpr_app_db";
   const SESSION_KEY = "currentUser";
@@ -384,7 +383,7 @@
         const attachment = file ? await toAttachment(file) : selectedAttachment;
         db.tickets.push(ticket);
         db.messages.push({ id: createId("msg"), ticketId: ticket.id, senderId: currentUser.id, senderRole: ROLES.USER, content: content, attachment: attachment, createdAt: now });
-        writeDb(db); 
+        writeDb(db);
         e.target.reset();
         selectedAttachment = null;
         document.getElementById("attachmentName").textContent = "Файл не выбран";
