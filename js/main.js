@@ -1,4 +1,3 @@
-import { syncMessageToSupabase, subscribeToMessages, unsubscribeFromMessages } from './db/SupabaseService.js';
 (function () {
   const STORAGE_KEY = "ldpr_app_db";
   const SESSION_KEY = "currentUser";
@@ -80,16 +79,6 @@ import { syncMessageToSupabase, subscribeToMessages, unsubscribeFromMessages } f
   function formatDate(iso) {
     return new Date(iso).toLocaleString("ru-RU");
   }
-  function csvEscape(value) {
-    const str = String(value == null ? "" : value);
-    const escaped = str.replace(/"/g, '""');
-    return '"' + escaped + '"';
-  }
-  function parseDateOnly(value, endOfDay) {
-    if (!value) return null;
-    const date = new Date(value + (endOfDay ? "T23:59:59.999" : "T00:00:00.000"));
-    return isNaN(date.getTime()) ? null : date;
-  }
   function applyTheme(theme) {
     document.body.classList.remove("theme-dark", "theme-light");
     document.body.classList.add(theme === "light" ? "theme-light" : "theme-dark");
@@ -115,105 +104,12 @@ import { syncMessageToSupabase, subscribeToMessages, unsubscribeFromMessages } f
     });
     document.body.appendChild(btn);
   }
-  function normalizeAttachment(attachment) {
-    if (!attachment) return null;
-    if (typeof attachment === "string") {
-      return { name: attachment, type: "", isImage: false, dataUrl: "" };
-    }
-    return {
-      name: attachment.name || "Файл",
-      type: attachment.type || "",
-      isImage: Boolean(attachment.isImage),
-      dataUrl: attachment.dataUrl || "",
-    };
-  }
   function renderAttachmentHtml(attachment) {
-    const a = normalizeAttachment(attachment);
-    if (!a) return "";
-    if (a.isImage && a.dataUrl) {
-      return (
-        '<div class="mt-1 text-xs opacity-90">' +
-        '<p>Вложение: ' + a.name + "</p>" +
-        '<a class="image-open-link" href="' + a.dataUrl + '">' +
-        '<img src="' + a.dataUrl + '" alt="' + a.name + '" class="mt-2 rounded-md border border-slate-200 max-h-40 w-auto object-contain bg-white" />' +
-        "</a>" +
-        '<a class="image-open-link text-blue-700 underline" href="' + a.dataUrl + '">Открыть изображение</a>' +
-        "</div>"
-      );
+    if (!attachment) return "";
+    if (typeof attachment === "string") {
+      return '<p class="text-xs opacity-80 mt-1">Вложение: ' + attachment + "</p>";
     }
-    if (a.dataUrl) {
-      return (
-        '<div class="mt-1 text-xs opacity-90">' +
-        '<p>Вложение: ' + a.name + "</p>" +
-        '<a class="text-blue-700 underline" href="' + a.dataUrl + '" download="' + a.name + '">Скачать файл</a>' +
-        "</div>"
-      );
-    }
-    return '<p class="text-xs opacity-80 mt-1">Вложение: ' + a.name + "</p>";
-  }
-  function toAttachment(file) {
-    if (!file) return Promise.resolve(null);
-    const base = {
-      name: file.name,
-      type: file.type || "",
-      isImage: Boolean(file.type && file.type.indexOf("image/") === 0),
-      dataUrl: "",
-    };
-    return new Promise(function (resolve) {
-      const reader = new FileReader();
-      reader.onload = function (event) {
-        const dataUrl = typeof event.target.result === "string" ? event.target.result : "";
-        if (!dataUrl) {
-          resolve(base);
-          return;
-        }
-        if (!base.isImage) {
-          base.dataUrl = dataUrl;
-          resolve(base);
-          return;
-        }
-        compressImageDataUrl(dataUrl, 640, 640, 0.6, 420000).then(function (compressed) {
-          base.dataUrl = compressed || dataUrl;
-          resolve(base);
-        });
-      };
-      reader.onerror = function () {
-        resolve(base);
-      };
-      reader.readAsDataURL(file);
-    });
-  }
-  function compressImageDataUrl(dataUrl, maxW, maxH, quality, maxBytes) {
-    return new Promise(function (resolve) {
-      const img = new Image();
-      img.onload = function () {
-        let w = img.width;
-        let h = img.height;
-        const ratio = Math.min(maxW / w, maxH / h, 1);
-        w = Math.round(w * ratio);
-        h = Math.round(h * ratio);
-        const canvas = document.createElement("canvas");
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          resolve(dataUrl);
-          return;
-        }
-        ctx.drawImage(img, 0, 0, w, h);
-        let q = quality;
-        let out = canvas.toDataURL("image/jpeg", q);
-        while (out.length > maxBytes && q > 0.25) {
-          q -= 0.1;
-          out = canvas.toDataURL("image/jpeg", q);
-        }
-        resolve(out);
-      };
-      img.onerror = function () {
-        resolve(dataUrl);
-      };
-      img.src = dataUrl;
-    });
+    return '<p class="text-xs opacity-80 mt-1">Вложение: ' + (attachment.name || "Файл") + "</p>";
   }
 
   function initLoginPage() {
@@ -330,7 +226,7 @@ import { syncMessageToSupabase, subscribeToMessages, unsubscribeFromMessages } f
         document.getElementById("attachmentName").textContent = "Файл не выбран";
         return;
       }
-      selectedAttachment = { name: f.name, type: f.type || "", isImage: Boolean((f.type || "").indexOf("image/") === 0), dataUrl: "" };
+      selectedAttachment = { name: f.name, type: f.type || "", isImage: Boolean((f.type || "").indexOf("image/") === 0) };
       document.getElementById("attachmentName").textContent = selectedAttachment.isImage
         ? "Изображение: " + selectedAttachment.name
         : "Файл: " + selectedAttachment.name;
@@ -370,46 +266,23 @@ import { syncMessageToSupabase, subscribeToMessages, unsubscribeFromMessages } f
           '<p class="text-[11px] opacity-70 mt-1">' + formatDate(m.createdAt) + "</p></div>";
       }).join("");
       open("ticketChatModal");
-      
-      // Подписка на новые сообщения из Supabase
-      unsubscribeFromMessages();
-      subscribeToMessages(ticketId, function(newMsg) {
-        const messagesDiv = document.getElementById("chatMessages");
-        // Проверяем, нет ли уже такого сообщения
-        if (!messagesDiv.innerHTML.includes(newMsg.id)) {
-          messagesDiv.innerHTML += '<div class="chat-bubble ' + (newMsg.senderRole === ROLES.ADMIN ? "chat-admin" : "chat-user") + '">' +
-            "<p>" + newMsg.content + "</p>" +
-            renderAttachmentHtml(newMsg.attachment) +
-            '<p class="text-[11px] opacity-70 mt-1">' + formatDate(newMsg.createdAt) + "</p></div>";
-          messagesDiv.scrollTop = messagesDiv.scrollHeight;
-          renderTickets();
-        }
-      });
     }
 
-    document.getElementById("createTicketForm").addEventListener("submit", async function (e) {
+    document.getElementById("createTicketForm").addEventListener("submit", function (e) {
       e.preventDefault();
-      try {
-        const db = readDb();
-        const content = document.getElementById("ticketMessage").value.trim();
-        if (!content) return;
-        const now = nowIso();
-        const ticket = { id: createId("tkt"), userId: currentUser.id, subject: document.getElementById("ticketSubject").value, status: "new", createdAt: now, updatedAt: now };
-        const file = document.getElementById("attachmentInput").files[0] || null;
-        const attachment = file ? await toAttachment(file) : selectedAttachment;
-        const newMessage = { id: createId("msg"), ticketId: ticket.id, senderId: currentUser.id, senderRole: ROLES.USER, content: content, attachment: attachment, createdAt: now };
-        db.tickets.push(ticket);
-        db.messages.push(newMessage);
-        writeDb(db);
-        syncMessageToSupabase(newMessage);
-        e.target.reset();
-        selectedAttachment = null;
-        document.getElementById("attachmentName").textContent = "Файл не выбран";
-        close("createTicketModal");
-        renderTickets();
-      } catch (_error) {
-        alert("Не удалось сохранить вложение. Попробуйте фото меньшего размера.");
-      }
+      const db = readDb();
+      const content = document.getElementById("ticketMessage").value.trim();
+      if (!content) return;
+      const now = nowIso();
+      const ticket = { id: createId("tkt"), userId: currentUser.id, subject: document.getElementById("ticketSubject").value, status: "new", createdAt: now, updatedAt: now };
+      db.tickets.push(ticket);
+      db.messages.push({ id: createId("msg"), ticketId: ticket.id, senderId: currentUser.id, senderRole: ROLES.USER, content: content, attachment: selectedAttachment ? selectedAttachment.name : null, createdAt: now });
+      writeDb(db);
+      e.target.reset();
+      selectedAttachment = null;
+      document.getElementById("attachmentName").textContent = "Файл не выбран";
+      close("createTicketModal");
+      renderTickets();
     });
 
     document.getElementById("sendUserMessageForm").addEventListener("submit", function (e) {
@@ -419,10 +292,8 @@ import { syncMessageToSupabase, subscribeToMessages, unsubscribeFromMessages } f
       const content = input.value.trim();
       if (!content) return;
       const db = readDb();
-      const newMessage = { id: createId("msg"), ticketId: activeTicketId, senderId: currentUser.id, senderRole: ROLES.USER, content: content, attachment: null, createdAt: nowIso() };
-      db.messages.push(newMessage);
+      db.messages.push({ id: createId("msg"), ticketId: activeTicketId, senderId: currentUser.id, senderRole: ROLES.USER, content: content, attachment: null, createdAt: nowIso() });
       writeDb(db);
-      syncMessageToSupabase(newMessage);
       input.value = "";
       openChat(activeTicketId);
       renderTickets();
@@ -472,39 +343,10 @@ import { syncMessageToSupabase, subscribeToMessages, unsubscribeFromMessages } f
     const topicFilter = document.getElementById("topicFilter");
     topicFilter.innerHTML = '<option value="all">Все темы</option>' + Object.keys(TOPICS).map(function (k) { return '<option value="' + k + '">' + TOPICS[k] + "</option>"; }).join("");
     let openedTicketId = null;
-    let adminSelectedAttachment = null;
 
     function open(id) { document.getElementById(id).classList.remove("hidden"); }
     function close(id) { document.getElementById(id).classList.add("hidden"); }
     document.getElementById("closeAdminTicketModalBtn").addEventListener("click", function () { close("adminTicketModal"); });
-    document.getElementById("downloadTicketPdfBtn").addEventListener("click", function () {
-      if (!openedTicketId) return;
-      const row = getRows().find(function (r) { return r.ticket.id === openedTicketId; });
-      if (!row) return;
-      exportTicketToPdf(row);
-    });
-    document.getElementById("downloadPeriodReportBtn").addEventListener("click", function () {
-      const fromValue = document.getElementById("reportDateFrom").value;
-      const toValue = document.getElementById("reportDateTo").value;
-      const rows = filterRowsByPeriod(getRows(), fromValue, toValue);
-      if (!rows.length) {
-        alert("За выбранный период обращений не найдено.");
-        return;
-      }
-      exportPeriodReportCsv(rows, fromValue, toValue);
-    });
-    document.getElementById("adminAttachmentInput").addEventListener("change", function (e) {
-      const f = e.target.files[0];
-      if (!f) {
-        adminSelectedAttachment = null;
-        document.getElementById("adminAttachmentName").textContent = "Файл не выбран";
-        return;
-      }
-      adminSelectedAttachment = { name: f.name, type: f.type || "", isImage: Boolean((f.type || "").indexOf("image/") === 0), dataUrl: "" };
-      document.getElementById("adminAttachmentName").textContent = adminSelectedAttachment.isImage
-        ? "Изображение: " + adminSelectedAttachment.name
-        : "Файл: " + adminSelectedAttachment.name;
-    });
 
     function getRows() {
       const db = readDb();
@@ -514,48 +356,12 @@ import { syncMessageToSupabase, subscribeToMessages, unsubscribeFromMessages } f
         return { ticket: t, user: user, first: messages[0], messages: messages };
       }).sort(function (a, b) { return b.ticket.createdAt.localeCompare(a.ticket.createdAt); });
     }
-    function filterRowsByPeriod(rows, fromValue, toValue) {
-      const fromDate = parseDateOnly(fromValue, false);
-      const toDate = parseDateOnly(toValue, true);
-      return rows.filter(function (row) {
-        const created = new Date(row.ticket.createdAt);
-        if (fromDate && created < fromDate) return false;
-        if (toDate && created > toDate) return false;
-        return true;
-      });
-    }
-    function exportPeriodReportCsv(rows, fromValue, toValue) {
-      const headers = ["Дата", "ФИО", "Email", "Тема", "Статус", "ID обращения"];
-      const lines = [headers.map(csvEscape).join(";")];
-      rows.forEach(function (row) {
-        lines.push([
-          formatDate(row.ticket.createdAt),
-          row.user ? row.user.name : "-",
-          row.user ? row.user.email : "-",
-          TOPICS[row.ticket.subject] || row.ticket.subject,
-          STATUS_LABELS[row.ticket.status] || row.ticket.status,
-          row.ticket.id,
-        ].map(csvEscape).join(";"));
-      });
-      const csv = "\uFEFF" + lines.join("\n");
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      const period = (fromValue || "start") + "_to_" + (toValue || "end");
-      link.download = "otchet_obrasheniya_" + period + ".csv";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(link.href);
-    }
 
     function renderTable() {
       const status = document.getElementById("statusFilter").value;
       const topic = document.getElementById("topicFilter").value;
       const search = document.getElementById("searchFilter").value.trim().toLowerCase();
-      const fromValue = document.getElementById("reportDateFrom").value;
-      const toValue = document.getElementById("reportDateTo").value;
-      const rows = filterRowsByPeriod(getRows(), fromValue, toValue).filter(function (r) {
+      const rows = getRows().filter(function (r) {
         const sOk = status === "all" || r.ticket.status === status;
         const tOk = topic === "all" || r.ticket.subject === topic;
         const qOk = !search || (r.user && ((r.user.name || "").toLowerCase().includes(search) || (r.user.email || "").toLowerCase().includes(search)));
@@ -563,7 +369,7 @@ import { syncMessageToSupabase, subscribeToMessages, unsubscribeFromMessages } f
       });
       const tbody = document.getElementById("ticketsTbody");
       if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-500">Ничего не найдено</td></td>';
+        tbody.innerHTML = '<td><td colspan="7" class="p-4 text-center text-gray-500">Ничего не найдено</td></tr>';
         return;
       }
       tbody.innerHTML = rows.map(function (r) {
@@ -575,7 +381,7 @@ import { syncMessageToSupabase, subscribeToMessages, unsubscribeFromMessages } f
           "<td class='p-3'>" + ((r.first && r.first.content) ? r.first.content.slice(0, 70) : "") + "</td>" +
           "<td class='p-3'><span class='status-pill " + STATUS_CLASSES[r.ticket.status] + "'>" + STATUS_LABELS[r.ticket.status] + "</span></td>" +
           "<td class='p-3'><button class='px-3 py-1 bg-blue-700 text-white rounded hover:bg-blue-800' data-open-ticket='" + r.ticket.id + "'>Открыть</button></td>" +
-          " </tr>";
+          "</tr>";
       }).join("");
       tbody.querySelectorAll("[data-open-ticket]").forEach(function (btn) {
         btn.addEventListener("click", function () { openTicket(btn.getAttribute("data-open-ticket")); });
@@ -602,181 +408,35 @@ import { syncMessageToSupabase, subscribeToMessages, unsubscribeFromMessages } f
       st.innerHTML = '<option value="new">Новое</option><option value="in_progress">В работе</option><option value="closed">Завершено</option>';
       st.value = row.ticket.status;
       open("adminTicketModal");
-      
-      // Подписка на новые сообщения для админа
-      unsubscribeFromMessages();
-      subscribeToMessages(ticketId, function(newMsg) {
-        const messagesDiv = document.getElementById("adminChatHistory");
-        if (!messagesDiv.innerHTML.includes(newMsg.id)) {
-          messagesDiv.innerHTML += '<div class="chat-bubble ' + (newMsg.senderRole === ROLES.ADMIN ? "chat-admin" : "chat-user") + '">' +
-            "<p>" + newMsg.content + "</p>" +
-            renderAttachmentHtml(newMsg.attachment) +
-            "<p class='text-[11px] opacity-70 mt-1'>" + formatDate(newMsg.createdAt) + "</p></div>";
-          messagesDiv.scrollTop = messagesDiv.scrollHeight;
-          renderTable();
-        }
-      });
     }
 
-    function exportTicketToPdf(row) {
-      if (!window.pdfMake) {
-        alert("Библиотека PDF не загружена. Обновите страницу.");
-        return;
-      }
-      const content = [
-        { text: "ЛДПР - Выгрузка переписки по обращению", style: "header" },
-        { text: "Дата выгрузки: " + formatDate(nowIso()), margin: [0, 0, 0, 4] },
-        { text: "ФИО: " + (row.user ? row.user.name : "-"), margin: [0, 0, 0, 2] },
-        { text: "Email: " + (row.user ? row.user.email : "-"), margin: [0, 0, 0, 2] },
-        { text: "Телефон: " + (row.user ? row.user.phone : "-"), margin: [0, 0, 0, 2] },
-        { text: "Тема: " + TOPICS[row.ticket.subject], margin: [0, 0, 0, 2] },
-        { text: "Статус: " + STATUS_LABELS[row.ticket.status], margin: [0, 0, 0, 10] },
-        { text: "История сообщений", style: "subheader", margin: [0, 6, 0, 8] },
-      ];
-
-      row.messages.forEach(function (m, idx) {
-        const roleLabel = m.senderRole === ROLES.ADMIN ? "Администратор" : "Пользователь";
-        content.push({
-          text: (idx + 1) + ". " + roleLabel + " (" + formatDate(m.createdAt) + ")",
-          bold: true,
-          margin: [0, 6, 0, 4],
-        });
-        content.push({
-          text: m.content || "",
-          margin: [0, 0, 0, 4],
-        });
-
-        const attachmentObj = normalizeAttachment(m.attachment);
-        if (attachmentObj && attachmentObj.name) {
-          content.push({
-            text: "Вложение: " + attachmentObj.name,
-            fontSize: 10,
-            color: "#374151",
-            margin: [0, 0, 0, 4],
-          });
-        }
-
-        if (attachmentObj && attachmentObj.isImage && attachmentObj.dataUrl) {
-          content.push({
-            image: attachmentObj.dataUrl,
-            width: 220,
-            margin: [0, 2, 0, 6],
-          });
-        }
-
-        content.push({
-          canvas: [{ type: "line", x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 0.5, lineColor: "#d1d5db" }],
-          margin: [0, 2, 0, 2],
-        });
-      });
-
-      const docDefinition = {
-        pageSize: "A4",
-        pageMargins: [40, 40, 40, 40],
-        content: content,
-        defaultStyle: {
-          font: "Roboto",
-          fontSize: 11,
-          color: "#111827",
-        },
-        styles: {
-          header: { fontSize: 16, bold: true, margin: [0, 0, 0, 10] },
-          subheader: { fontSize: 13, bold: true },
-        },
-      };
-
-      const safeName = ((row.user && row.user.name) ? row.user.name : "user")
-        .replace(/[\\/:*?"<>|]/g, "_")
-        .replace(/\s+/g, "_");
-      const filename = "obrashenie_" + safeName + "_" + row.ticket.id + ".pdf";
-      window.pdfMake.createPdf(docDefinition).download(filename);
-    }
-
-    document.getElementById("adminReplyForm").addEventListener("submit", async function (e) {
+    document.getElementById("adminReplyForm").addEventListener("submit", function (e) {
       e.preventDefault();
       if (!openedTicketId) return;
       const content = document.getElementById("adminReplyInput").value.trim();
       if (!content) return;
-      try {
-        const db = readDb();
-        const file = document.getElementById("adminAttachmentInput").files[0] || null;
-        const attachment = file ? await toAttachment(file) : adminSelectedAttachment;
-        const newMessage = { id: createId("msg"), ticketId: openedTicketId, senderId: admin.id, senderRole: ROLES.ADMIN, content: content, attachment: attachment, createdAt: nowIso() };
-        db.messages.push(newMessage);
-        const ticket = db.tickets.find(function (t) { return t.id === openedTicketId; });
-        if (ticket) {
-          ticket.status = document.getElementById("adminStatusSelect").value;
-          ticket.updatedAt = nowIso();
-        }
-        writeDb(db);
-        syncMessageToSupabase(newMessage);
-        document.getElementById("adminReplyInput").value = "";
-        document.getElementById("adminReplyForm").reset();
-        adminSelectedAttachment = null;
-        document.getElementById("adminAttachmentName").textContent = "Файл не выбран";
-        renderTable();
-        openTicket(openedTicketId);
-      } catch (_error) {
-        alert("Не удалось сохранить вложение администратора. Выберите файл меньшего размера.");
+      const db = readDb();
+      db.messages.push({ id: createId("msg"), ticketId: openedTicketId, senderId: admin.id, senderRole: ROLES.ADMIN, content: content, attachment: null, createdAt: nowIso() });
+      const ticket = db.tickets.find(function (t) { return t.id === openedTicketId; });
+      if (ticket) {
+        ticket.status = document.getElementById("adminStatusSelect").value;
+        ticket.updatedAt = nowIso();
       }
+      writeDb(db);
+      document.getElementById("adminReplyInput").value = "";
+      renderTable();
+      openTicket(openedTicketId);
     });
 
     document.getElementById("statusFilter").addEventListener("change", renderTable);
     document.getElementById("topicFilter").addEventListener("change", renderTable);
     document.getElementById("searchFilter").addEventListener("input", renderTable);
-    document.getElementById("reportDateFrom").addEventListener("change", renderTable);
-    document.getElementById("reportDateTo").addEventListener("change", renderTable);
     renderTable();
-  }
-
-  function initInlineImageViewer() {
-    if (!document.getElementById("imagePreviewModal")) {
-      var modal = document.createElement("div");
-      modal.id = "imagePreviewModal";
-      modal.className = "fixed inset-0 bg-black/80 hidden items-center justify-center p-4 z-[100]";
-      modal.innerHTML =
-        '<div class="relative max-w-5xl w-full flex items-center justify-center">' +
-        '<button id="imagePreviewCloseBtn" class="absolute top-2 right-2 bg-white text-slate-900 rounded px-3 py-1 font-semibold">Закрыть</button>' +
-        '<img id="imagePreviewImg" src="" alt="preview" class="max-h-[90vh] w-auto object-contain rounded" />' +
-        "</div>";
-      document.body.appendChild(modal);
-    }
-
-    var modalEl = document.getElementById("imagePreviewModal");
-    var imgEl = document.getElementById("imagePreviewImg");
-    var closeBtn = document.getElementById("imagePreviewCloseBtn");
-    if (!modalEl || !imgEl || !closeBtn) return;
-
-    function closeViewer() {
-      modalEl.classList.add("hidden");
-      modalEl.classList.remove("flex");
-      imgEl.src = "";
-    }
-
-    closeBtn.addEventListener("click", closeViewer);
-    modalEl.addEventListener("click", function (e) {
-      if (e.target === modalEl) closeViewer();
-    });
-    document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape") closeViewer();
-    });
-
-    document.addEventListener("click", function (e) {
-      var link = e.target.closest("a.image-open-link");
-      if (!link) return;
-      e.preventDefault();
-      var src = link.getAttribute("href");
-      if (!src) return;
-      imgEl.src = src;
-      modalEl.classList.remove("hidden");
-      modalEl.classList.add("flex");
-    });
   }
 
   document.addEventListener("DOMContentLoaded", function () {
     ensureSeed();
     initThemeToggle();
-    initInlineImageViewer();
     const page = document.body.getAttribute("data-page");
     if (page === "login") initLoginPage();
     if (page === "register") initRegisterPage();
