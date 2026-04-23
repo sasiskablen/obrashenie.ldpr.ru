@@ -372,6 +372,18 @@ syncMessageToSupabase(newMessage);
           '<p class="text-[11px] opacity-70 mt-1">' + formatDate(m.createdAt) + "</p></div>";
       }).join("");
       open("ticketChatModal");
+      unsubscribeFromMessages();
+subscribeToMessages(ticketId, function(newMsg) {
+  const messagesDiv = document.getElementById("chatMessages");
+  if (!messagesDiv.innerHTML.includes(newMsg.id)) {
+    messagesDiv.innerHTML += '<div class="chat-bubble ' + (newMsg.senderRole === ROLES.ADMIN ? "chat-admin" : "chat-user") + '">' +
+      "<p>" + newMsg.content + "</p>" +
+      renderAttachmentHtml(newMsg.attachment) +
+      '<p class="text-[11px] opacity-70 mt-1">' + formatDate(newMsg.createdAt) + "</p></div>";
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    renderTickets();
+  }
+});
     }
 
     document.getElementById("createTicketForm").addEventListener("submit", async function (e) {
