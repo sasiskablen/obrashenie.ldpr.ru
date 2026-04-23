@@ -1,4 +1,4 @@
-
+import { syncMessageToSupabase, subscribeToMessages, unsubscribeFromMessages } from './db/SupabaseService.js';
 (function () {
   const STORAGE_KEY = "ldpr_app_db";
   const SESSION_KEY = "currentUser";
@@ -59,7 +59,8 @@
       { id: createId("msg"), ticketId: tickets[1].id, senderId: user1Id, senderRole: ROLES.USER, content: "Жалоба на постоянные отключения горячей воды в доме.", attachment: "акт_жкх.pdf", createdAt },
       { id: createId("msg"), ticketId: tickets[1].id, senderId: adminId, senderRole: ROLES.ADMIN, content: "Принято в работу. Передали обращение в профильный комитет.", attachment: null, createdAt },
     ];
-    writeDb({ users, tickets, messages });
+    writeDb({ users, tickets, messages }); const newMessage = db.messages[db.messages.length - 1];
+syncMessageToSupabase(newMessage);
   }
   function getSession() {
     const raw = sessionStorage.getItem(SESSION_KEY);
@@ -275,7 +276,8 @@
       }
       const user = { id: createId("usr"), name, email, phone, address, role: ROLES.USER, passwordHash: simpleHash(password), createdAt: nowIso() };
       db.users.push(user);
-      writeDb(db);
+      writeDb(db); const newMessage = db.messages[db.messages.length - 1];
+syncMessageToSupabase(newMessage);
       setSession(user);
       location.href = "user-dashboard.html";
     });
@@ -384,7 +386,8 @@
         const attachment = file ? await toAttachment(file) : selectedAttachment;
         db.tickets.push(ticket);
         db.messages.push({ id: createId("msg"), ticketId: ticket.id, senderId: currentUser.id, senderRole: ROLES.USER, content: content, attachment: attachment, createdAt: now });
-        writeDb(db); 
+        writeDb(db); const newMessage = db.messages[db.messages.length - 1];
+syncMessageToSupabase(newMessage);
         e.target.reset();
         selectedAttachment = null;
         document.getElementById("attachmentName").textContent = "Файл не выбран";
@@ -403,7 +406,8 @@
       if (!content) return;
       const db = readDb();
       db.messages.push({ id: createId("msg"), ticketId: activeTicketId, senderId: currentUser.id, senderRole: ROLES.USER, content: content, attachment: null, createdAt: nowIso() });
-      writeDb(db);
+      writeDb(db); const newMessage = db.messages[db.messages.length - 1];
+syncMessageToSupabase(newMessage);
       input.value = "";
       openChat(activeTicketId);
       renderTickets();
@@ -430,7 +434,8 @@
       userInDb.email = updated.email;
       userInDb.phone = updated.phone;
       userInDb.address = updated.address;
-      writeDb(db);
+      writeDb(db); const newMessage = db.messages[db.messages.length - 1];
+syncMessageToSupabase(newMessage);
       currentUser = {
         id: userInDb.id,
         name: userInDb.name,
@@ -674,7 +679,8 @@
           ticket.status = document.getElementById("adminStatusSelect").value;
           ticket.updatedAt = nowIso();
         }
-        writeDb(db);
+        writeDb(db); const newMessage = db.messages[db.messages.length - 1];
+syncMessageToSupabase(newMessage);
         document.getElementById("adminReplyInput").value = "";
         document.getElementById("adminReplyForm").reset();
         adminSelectedAttachment = null;
